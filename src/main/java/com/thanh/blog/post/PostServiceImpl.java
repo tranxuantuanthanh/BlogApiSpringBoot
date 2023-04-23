@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
+import com.thanh.blog.category.CategoryRepository;
 import com.thanh.blog.exception.AccessDeniedException;
 import com.thanh.blog.exception.BadRequestException;
 import com.thanh.blog.exception.ResourceNotFoundException;
@@ -20,8 +21,7 @@ import com.thanh.blog.model.Tag;
 import com.thanh.blog.model.User;
 import com.thanh.blog.payload.response.ApiResponse;
 import com.thanh.blog.payload.response.PageResponse;
-import com.thanh.blog.repository.CategoryRepository;
-import com.thanh.blog.repository.TagRepository;
+import com.thanh.blog.tag.TagRepository;
 
 import lombok.AllArgsConstructor;
 
@@ -110,6 +110,9 @@ public class PostServiceImpl implements PostService {
         Optional<Post> post = postRepository.findById(data.getId());
         if (post.isEmpty()) {
             throw new BadRequestException("The post not exists on the system.");
+        }
+        if (Boolean.TRUE.equals(postRepository.existsBySlug(data.getSlug()))) {
+            throw new BadRequestException("Slug already taken.");
         }
         if (post.get().getUser().getId() != user.getId()) {
             throw new AccessDeniedException("You do not have access to this method.");

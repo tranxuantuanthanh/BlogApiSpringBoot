@@ -2,6 +2,7 @@ package com.thanh.blog.auth;
 
 import com.thanh.blog.exception.BadRequestException;
 import com.thanh.blog.security.JwtService;
+import com.thanh.blog.user.UserDTOMapper;
 import com.thanh.blog.user.UserRepository;
 import com.thanh.blog.model.Token;
 import com.thanh.blog.model.TokenType;
@@ -30,6 +31,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final UserDTOMapper userDTOMapper;
 
     public AuthenticationResponse register(RegisterRequest request) {
         if (Boolean.TRUE.equals(repository.existsByEmail(request.getEmail()))) {
@@ -54,7 +56,7 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
-                .user(user)
+                .user(userDTOMapper.apply(user))
                 .build();
     }
 
@@ -62,12 +64,12 @@ public class AuthenticationService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
-                        request.getPassword()
-                )
-        );
+                        request.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         var user = repository.findByEmail(request.getEmail())
                 .orElseThrow();
+        user.setLastLogin(new Date());
+        repository.save(user);
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
         revokeAllUserTokens(user);
@@ -75,7 +77,7 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
-                .user(user)
+                .user(userDTOMapper.apply(user))
                 .build();
     }
 
@@ -103,8 +105,7 @@ public class AuthenticationService {
 
     public void refreshToken(
             HttpServletRequest request,
-            HttpServletResponse response
-    ) throws IOException {
+            HttpServletResponse response) throws IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String refreshToken;
         final String userEmail;

@@ -1,7 +1,8 @@
 package com.thanh.blog.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.thanh.blog.model.User;
+import com.thanh.blog.user.UserDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,5 +19,5 @@ public class AuthenticationResponse {
   @JsonProperty("refresh_token")
   private String refreshToken;
   @JsonProperty("user")
-  private User user;
+  private UserDTO user;
 }
